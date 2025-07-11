@@ -1,0 +1,9 @@
+{
+  "text": "Download Progress",
+  "icon": 1234,
+  "color": "#00FF00",
+  "progress": 75,
+  "progress_c": "#FF0000",
+  "progress_bc": "#333333",
+  "duration": 5
+}

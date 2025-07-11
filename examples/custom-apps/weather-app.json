@@ -1,0 +1,9 @@
+{
+  "text": "Weather: 18°C Rain",
+  "icon": 2422,
+  "color": "#4A90E2",
+  "duration": 20,
+  "progress": 60,
+  "progress_c": "#87CEEB",
+  "lifetime": 1800
+}

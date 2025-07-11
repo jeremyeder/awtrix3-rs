@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Comprehensive release process and distribution system
+- Multi-platform installation scripts (Unix/Linux/macOS and Windows)
+- Homebrew formula for macOS/Linux package management
+- GitHub Actions workflows for automated releases
+- API documentation deployment via GitHub Pages
+- Pre-release validation workflow with comprehensive testing
+- Shell completion support for bash, zsh, fish, and PowerShell
+- Professional installation documentation (INSTALL.md)
+- Release preparation checklist for maintainers (RELEASE.md)
+
+### Changed
+- Enhanced README.md with comprehensive installation instructions
+- Improved documentation structure and organization
+
+## [1.0.0] - 2025-07-11
+
+### Added
 - Initial project setup
 - Complete AWTRIX3 HTTP API client implementation (100% coverage)
 - CLI with all 35 endpoints supported

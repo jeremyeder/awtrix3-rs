@@ -1,0 +1,86 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  docs:
+    name: Build and Deploy Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-docs-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build documentation
+        run: |
+          cargo doc --all-features --no-deps --document-private-items
+          echo '<meta http-equiv="refresh" content="0; url=awtrix3">' > target/doc/index.html
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/doc
+          force_orphan: true
+
+  test-docs:
+    name: Test Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-test-docs-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Test documentation examples
+        run: cargo test --doc
+
+      - name: Check documentation links
+        run: cargo doc --all-features --no-deps
+
+      - name: Verify README examples compile
+        run: |
+          # Extract and test Rust code blocks from README
+          grep -A 20 '```rust' README.md | grep -v '```' | grep -v '^--$' > /tmp/readme_examples.rs || true
+          if [ -s /tmp/readme_examples.rs ]; then
+            echo "Testing README examples..."
+            # Create a temporary Cargo project to test examples
+            mkdir -p /tmp/readme_test
+            cd /tmp/readme_test
+            cargo init --name readme_test
+            echo 'awtrix3 = { path = "'$GITHUB_WORKSPACE'" }' >> Cargo.toml
+            echo 'tokio = { version = "1.0", features = ["full"] }' >> Cargo.toml
+            cat /tmp/readme_examples.rs > src/main.rs
+            cargo check
+          fi

@@ -1,0 +1,15 @@
+{
+  "brightness": 255,
+  "auto_brightness": false,
+  "auto_transition": true,
+  "app_time": 5,
+  "transition": "slide",
+  "transition_time": 300,
+  "text_color": "#00FF00",
+  "scroll_speed": 120,
+  "time_app": {
+    "format": 1,
+    "show_weekday": true,
+    "cal_header_color": "#FF0000"
+  }
+}

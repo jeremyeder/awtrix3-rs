@@ -1,0 +1,53 @@
+{
+  "name": "@awtrix3/cli",
+  "version": "0.1.0",
+  "description": "Modern, async Rust CLI for controlling AWTRIX3 LED matrix displays",
+  "keywords": [
+    "awtrix3",
+    "led-matrix",
+    "cli",
+    "rust",
+    "async",
+    "notification",
+    "display"
+  ],
+  "homepage": "https://github.com/jeremyeder/awtrix3-rs",
+  "bugs": {
+    "url": "https://github.com/jeremyeder/awtrix3-rs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeremyeder/awtrix3-rs.git"
+  },
+  "license": "MIT OR Apache-2.0",
+  "author": {
+    "name": "Jeremy Eder",
+    "email": "jeder@redhat.com",
+    "url": "https://github.com/jeremyeder"
+  },
+  "bin": {
+    "awtrix3": "./bin/awtrix3"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js"
+  },
+  "files": [
+    "bin/",
+    "scripts/",
+    "README.md",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
+  ]
+}

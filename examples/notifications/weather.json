@@ -1,0 +1,8 @@
+{
+  "text": "Sunny 23°C",
+  "icon": 2422,
+  "color": "#FFD700",
+  "duration": 10,
+  "wakeup": true,
+  "stack": false
+}

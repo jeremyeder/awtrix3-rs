@@ -1,0 +1,311 @@
+name: Pre-Release Validation
+
+on:
+  push:
+    tags:
+      - 'v*-rc.*'
+      - 'v*-alpha.*'
+      - 'v*-beta.*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  validate-version:
+    name: Validate Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      is_prerelease: ${{ steps.check_prerelease.outputs.is_prerelease }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Check if pre-release
+        id: check_prerelease
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          if [[ "$VERSION" =~ -(rc|alpha|beta)\. ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "This is a pre-release: $VERSION"
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "This is a stable release: $VERSION"
+          fi
+
+      - name: Verify Cargo.toml version matches tag
+        run: |
+          CARGO_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          TAG_VERSION="${{ steps.get_version.outputs.version }}"
+          echo "Cargo.toml version: $CARGO_VERSION"
+          echo "Git tag version: $TAG_VERSION"
+          if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ Version mismatch: Cargo.toml ($CARGO_VERSION) != Git tag ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "✅ Version match confirmed"
+
+  comprehensive-test:
+    name: Comprehensive Testing
+    needs: validate-version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run all tests
+        run: cargo test --all-features --target ${{ matrix.target }} --verbose
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }} --all-features
+
+      - name: Test CLI functionality
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            BINARY="target/${{ matrix.target }}/release/awtrix3.exe"
+          else
+            BINARY="target/${{ matrix.target }}/release/awtrix3"
+          fi
+          
+          # Test version command
+          $BINARY --version
+          
+          # Test help command
+          $BINARY --help
+          
+          # Test completions generation
+          $BINARY completions bash > /dev/null
+          $BINARY completions zsh > /dev/null
+          $BINARY completions fish > /dev/null
+          $BINARY completions powershell > /dev/null
+          
+          echo "✅ CLI functionality tests passed"
+
+      - name: Test examples compilation
+        run: |
+          # Test that all example files would parse correctly
+          if [ -d "examples" ]; then
+            find examples -name "*.json" -type f | while read file; do
+              echo "Validating JSON: $file"
+              cat "$file" | python3 -m json.tool > /dev/null || {
+                echo "❌ Invalid JSON in $file"
+                exit 1
+              }
+            done
+            echo "✅ All example files are valid JSON"
+          fi
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    needs: validate-version
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Run security audit
+        run: cargo audit
+
+      - name: Check for known vulnerabilities
+        run: |
+          # Run additional security checks
+          cargo audit --db advisory-db --deny warnings || {
+            echo "❌ Security vulnerabilities found"
+            exit 1
+          }
+          echo "✅ No security vulnerabilities found"
+
+  performance-benchmark:
+    name: Performance Benchmark
+    runs-on: ubuntu-latest
+    needs: validate-version
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run benchmarks
+        run: |
+          # Run basic performance tests
+          cargo build --release
+          
+          # Time compilation
+          echo "Testing compilation performance..."
+          time cargo clean && time cargo build --release
+          
+          # Binary size check
+          BINARY_SIZE=$(stat -c%s "target/release/awtrix3" 2>/dev/null || stat -f%z "target/release/awtrix3")
+          echo "Binary size: $BINARY_SIZE bytes"
+          
+          # Set reasonable size limit (50MB)
+          MAX_SIZE=52428800
+          if [ $BINARY_SIZE -gt $MAX_SIZE ]; then
+            echo "❌ Binary too large: $BINARY_SIZE > $MAX_SIZE bytes"
+            exit 1
+          fi
+          echo "✅ Binary size acceptable: $BINARY_SIZE bytes"
+
+  integration-test:
+    name: Integration Testing
+    runs-on: ubuntu-latest
+    needs: validate-version
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Test installation script
+        run: |
+          # Test that install script syntax is valid
+          bash -n install.sh
+          echo "✅ Unix install script syntax valid"
+
+      - name: Test PowerShell script syntax
+        run: |
+          # Install PowerShell for syntax checking
+          sudo apt-get update
+          sudo apt-get install -y powershell
+          
+          # Check PowerShell script syntax
+          pwsh -Command "Get-Command -Syntax -Name './install.ps1'" > /dev/null
+          echo "✅ PowerShell install script syntax valid"
+
+      - name: Test Homebrew formula
+        run: |
+          # Basic validation of Ruby syntax in Homebrew formula
+          ruby -c Formula/awtrix3.rb
+          echo "✅ Homebrew formula syntax valid"
+
+  create-pre-release:
+    name: Create Pre-Release
+    needs: [validate-version, comprehensive-test, security-audit, performance-benchmark, integration-test]
+    runs-on: ubuntu-latest
+    if: needs.validate-version.outputs.is_prerelease == 'true'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Pre-Release
+        id: create_prerelease
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Pre-Release v${{ needs.validate-version.outputs.version }}
+          body: |
+            # AWTRIX3 CLI Pre-Release v${{ needs.validate-version.outputs.version }}
+            
+            🚧 **This is a pre-release version for testing purposes.**
+            
+            ## Pre-Release Testing
+            
+            This release has passed all automated tests:
+            - ✅ Comprehensive testing on all platforms
+            - ✅ Security audit
+            - ✅ Performance benchmarks
+            - ✅ Integration testing
+            
+            ## Installation
+            
+            **For testing only - use at your own risk:**
+            
+            ```bash
+            # Download and test
+            wget https://github.com/jeremyeder/awtrix3-rs/releases/download/v${{ needs.validate-version.outputs.version }}/awtrix3-v${{ needs.validate-version.outputs.version }}-x86_64-unknown-linux-gnu.tar.gz
+            ```
+            
+            ## Feedback
+            
+            Please report any issues with this pre-release version in the [GitHub Issues](https://github.com/jeremyeder/awtrix3-rs/issues).
+            
+            ---
+            
+            **Note:** This pre-release will be promoted to a stable release if no critical issues are found.
+          draft: false
+          prerelease: true
+
+  notification:
+    name: Send Notification
+    needs: [validate-version, create-pre-release]
+    runs-on: ubuntu-latest
+    if: always() && needs.validate-version.outputs.is_prerelease == 'true'
+    
+    steps:
+      - name: Report Results
+        run: |
+          if [[ "${{ needs.comprehensive-test.result }}" == "success" && 
+                "${{ needs.security-audit.result }}" == "success" && 
+                "${{ needs.performance-benchmark.result }}" == "success" && 
+                "${{ needs.integration-test.result }}" == "success" ]]; then
+            echo "✅ All pre-release validation checks passed!"
+            echo "Pre-release v${{ needs.validate-version.outputs.version }} is ready for testing."
+          else
+            echo "❌ Some validation checks failed:"
+            echo "- Comprehensive test: ${{ needs.comprehensive-test.result }}"
+            echo "- Security audit: ${{ needs.security-audit.result }}"
+            echo "- Performance benchmark: ${{ needs.performance-benchmark.result }}"
+            echo "- Integration test: ${{ needs.integration-test.result }}"
+            exit 1
+          fi

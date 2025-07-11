@@ -1,0 +1,8 @@
+{
+  "text": "AAPL $150.25 ↑2.4%",
+  "icon": 1234,
+  "color": "#00FF00",
+  "duration": 30,
+  "lifetime": 3600,
+  "save": true
+}

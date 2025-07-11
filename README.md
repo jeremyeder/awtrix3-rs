@@ -21,20 +21,49 @@ A modern, async Rust CLI and library for controlling AWTRIX3 LED matrix displays
 
 ## Installation
 
-### From crates.io
+### Quick Install (Recommended)
+
+**Unix/Linux/macOS:**
+```bash
+curl -sSL https://raw.githubusercontent.com/jeremyeder/awtrix3-rs/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+iwr -useb https://raw.githubusercontent.com/jeremyeder/awtrix3-rs/main/install.ps1 | iex
+```
+
+### Package Managers
+
+**Homebrew (macOS/Linux):**
+```bash
+brew tap jeremyeder/awtrix3-rs
+brew install awtrix3
+```
+
+**Cargo (Rust):**
 ```bash
 cargo install awtrix3
 ```
 
-### From source
+**npm (Node.js ecosystem):**
+```bash
+npm install -g @awtrix3/cli
+```
+
+### Manual Installation
+
+**Pre-built binaries:**
+Download pre-built binaries from the [releases page](https://github.com/jeremyeder/awtrix3-rs/releases).
+
+**From source:**
 ```bash
 git clone https://github.com/jeremyeder/awtrix3-rs
 cd awtrix3-rs
 cargo install --path .
 ```
 
-### Pre-built binaries
-Download pre-built binaries from the [releases page](https://github.com/jeremyeder/awtrix3-rs/releases).
+📋 **See [INSTALL.md](INSTALL.md) for detailed installation instructions and troubleshooting.**
 
 ## Quick Start
 

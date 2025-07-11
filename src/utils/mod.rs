@@ -1,6 +1,6 @@
 pub mod discovery;
 
-use awtrix3::{AwtrixError, Result, Color};
+use crate::{AwtrixError, Result, Color};
 
 /// Parse a color from various formats
 pub fn parse_color(input: &str) -> Result<Color> {

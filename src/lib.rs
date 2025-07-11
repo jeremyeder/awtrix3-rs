@@ -26,6 +26,12 @@ pub mod client;
 pub mod models;
 pub mod error;
 
+// Export utility modules for testing
+#[cfg(test)]
+pub mod utils;
+#[cfg(test)]
+pub mod config;
+
 // Re-exports for convenience
 pub use client::{Client, ClientBuilder};
 pub use models::{Notification, CustomApp, Settings, Color, Effect, Transition};

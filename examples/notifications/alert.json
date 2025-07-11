@@ -1,0 +1,9 @@
+{
+  "text": "ALERT: System Error",
+  "icon": 4567,
+  "color": "#FF0000",
+  "wakeup": true,
+  "hold": true,
+  "sound": "error",
+  "duration": 30
+}

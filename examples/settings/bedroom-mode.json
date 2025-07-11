@@ -1,0 +1,14 @@
+{
+  "brightness": 50,
+  "auto_brightness": true,
+  "auto_transition": true,
+  "app_time": 10,
+  "transition": "fade",
+  "transition_time": 1000,
+  "text_color": "#FFD700",
+  "scroll_speed": 80,
+  "time_app": {
+    "format": 2,
+    "show_weekday": false
+  }
+}
