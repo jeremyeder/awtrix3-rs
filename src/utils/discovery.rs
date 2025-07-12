@@ -1,7 +1,7 @@
+use anyhow::Result;
 #[cfg(feature = "discovery")]
 use mdns_sd::{ServiceDaemon, ServiceEvent};
 use std::time::Duration;
-use anyhow::Result;
 
 /// Discovered AWTRIX3 device
 #[derive(Debug, Clone)]
@@ -18,10 +18,10 @@ pub async fn discover_devices(timeout: Duration) -> Result<Vec<DiscoveredDevice>
     let mdns = ServiceDaemon::new()?;
     let service_type = "_http._tcp.local.";
     let receiver = mdns.browse(service_type)?;
-    
+
     let mut devices = Vec::new();
     let start = std::time::Instant::now();
-    
+
     while start.elapsed() < timeout {
         if let Ok(event) = receiver.recv_timeout(Duration::from_millis(100)) {
             if let ServiceEvent::ServiceResolved(info) = event {
@@ -29,7 +29,10 @@ pub async fn discover_devices(timeout: Duration) -> Result<Vec<DiscoveredDevice>
                 if is_awtrix_device(&info) {
                     let device = DiscoveredDevice {
                         name: info.get_hostname().to_string(),
-                        host: info.get_addresses().iter().next()
+                        host: info
+                            .get_addresses()
+                            .iter()
+                            .next()
                             .map(|addr| addr.to_string())
                             .unwrap_or_default(),
                         port: info.get_port(),
@@ -40,7 +43,7 @@ pub async fn discover_devices(timeout: Duration) -> Result<Vec<DiscoveredDevice>
             }
         }
     }
-    
+
     Ok(devices)
 }
 
@@ -48,15 +51,15 @@ pub async fn discover_devices(timeout: Duration) -> Result<Vec<DiscoveredDevice>
 fn is_awtrix_device(info: &mdns_sd::ServiceInfo) -> bool {
     // Check for AWTRIX-specific indicators
     let hostname = info.get_hostname().to_lowercase();
-    
+
     // Check hostname patterns
     if hostname.contains("awtrix") || hostname.contains("ulanzi") {
         return true;
     }
-    
+
     // TODO: Check TXT records for AWTRIX-specific keys when API is fixed
     // For now, just use hostname matching
-    
+
     false
 }
 

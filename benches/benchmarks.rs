@@ -1,11 +1,11 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use awtrix3::{Color, Notification};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn color_parsing_benchmark(c: &mut Criterion) {
     c.bench_function("color_from_hex", |b| {
         b.iter(|| Color::from_hex(black_box("#FF0000")))
     });
-    
+
     c.bench_function("color_to_hex", |b| {
         let color = Color::RED;
         b.iter(|| black_box(&color).to_hex())
@@ -32,7 +32,7 @@ fn serialization_benchmark(c: &mut Criterion) {
         .color(Color::RED)
         .duration(10)
         .build();
-    
+
     c.bench_function("notification_serialization", |b| {
         b.iter(|| serde_json::to_string(black_box(&notification)))
     });

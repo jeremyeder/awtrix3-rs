@@ -1,11 +1,11 @@
-pub mod power;
-pub mod notify;
 pub mod apps;
 pub mod custom;
+pub mod device;
 pub mod display;
+pub mod indicators;
+pub mod info;
+pub mod notify;
+pub mod power;
+pub mod settings;
 pub mod sound;
 pub mod system;
-pub mod info;
-pub mod settings;
-pub mod indicators;
-pub mod device;

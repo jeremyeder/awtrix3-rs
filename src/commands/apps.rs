@@ -11,11 +11,15 @@ pub async fn execute(client: awtrix3::Client, command: AppCommands) -> Result<()
             } else {
                 println!("  Current App: None");
             }
-            
+
             if !loop_info.apps.is_empty() {
                 println!("\nAvailable Apps:");
                 for app in loop_info.apps {
-                    let status = if app.enabled.unwrap_or(true) { "enabled" } else { "disabled" };
+                    let status = if app.enabled.unwrap_or(true) {
+                        "enabled"
+                    } else {
+                        "disabled"
+                    };
                     println!("  - {} ({})", app.name, status);
                 }
             } else {
@@ -37,7 +41,7 @@ pub async fn execute(client: awtrix3::Client, command: AppCommands) -> Result<()
         AppCommands::Reorder { apps } => {
             // Split the comma-separated list
             let app_list: Vec<&str> = apps.split(',').map(|s| s.trim()).collect();
-            
+
             // TODO: Implement reorder API call
             // For now, just show what would be reordered
             println!("Reordering apps to: {:?}", app_list);
@@ -48,6 +52,6 @@ pub async fn execute(client: awtrix3::Client, command: AppCommands) -> Result<()
             println!("App configuration update not yet implemented");
         }
     }
-    
+
     Ok(())
 }

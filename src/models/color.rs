@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize, Serializer, Deserializer};
-use std::fmt;
 use crate::error::{AwtrixError, Result};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::fmt;
 
 /// Represents a color in RGB format
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -15,32 +15,33 @@ impl Color {
     pub fn new(r: u8, g: u8, b: u8) -> Self {
         Self { r, g, b }
     }
-    
+
     /// Create a color from a hex string (e.g., "#FF0000" or "FF0000")
     pub fn from_hex(hex: &str) -> Result<Self> {
         let hex = hex.trim_start_matches('#');
-        
+
         if hex.len() != 6 {
             return Err(AwtrixError::InvalidColor(format!(
-                "Hex color must be 6 characters, got: {}", hex
+                "Hex color must be 6 characters, got: {}",
+                hex
             )));
         }
-        
+
         let r = u8::from_str_radix(&hex[0..2], 16)
             .map_err(|_| AwtrixError::InvalidColor(format!("Invalid hex color: {}", hex)))?;
         let g = u8::from_str_radix(&hex[2..4], 16)
             .map_err(|_| AwtrixError::InvalidColor(format!("Invalid hex color: {}", hex)))?;
         let b = u8::from_str_radix(&hex[4..6], 16)
             .map_err(|_| AwtrixError::InvalidColor(format!("Invalid hex color: {}", hex)))?;
-        
+
         Ok(Self { r, g, b })
     }
-    
+
     /// Convert to hex string
     pub fn to_hex(&self) -> String {
         format!("#{:02X}{:02X}{:02X}", self.r, self.g, self.b)
     }
-    
+
     /// Convert to RGB array
     pub fn to_rgb_array(&self) -> [u8; 3] {
         [self.r, self.g, self.b]
@@ -99,61 +100,86 @@ impl<'de> Deserialize<'de> for Color {
             Array([u8; 3]),
             Hex(String),
         }
-        
+
         match ColorFormat::deserialize(deserializer)? {
             ColorFormat::Array(rgb) => Ok(Color::from(rgb)),
-            ColorFormat::Hex(hex) => Color::from_hex(&hex)
-                .map_err(|e| serde::de::Error::custom(e.to_string())),
+            ColorFormat::Hex(hex) => {
+                Color::from_hex(&hex).map_err(|e| serde::de::Error::custom(e.to_string()))
+            }
         }
     }
 }
 
 // Predefined colors
 impl Color {
-    pub const WHITE: Self = Self { r: 255, g: 255, b: 255 };
+    pub const WHITE: Self = Self {
+        r: 255,
+        g: 255,
+        b: 255,
+    };
     pub const BLACK: Self = Self { r: 0, g: 0, b: 0 };
     pub const RED: Self = Self { r: 255, g: 0, b: 0 };
     pub const GREEN: Self = Self { r: 0, g: 255, b: 0 };
     pub const BLUE: Self = Self { r: 0, g: 0, b: 255 };
-    pub const YELLOW: Self = Self { r: 255, g: 255, b: 0 };
-    pub const CYAN: Self = Self { r: 0, g: 255, b: 255 };
-    pub const MAGENTA: Self = Self { r: 255, g: 0, b: 255 };
-    pub const ORANGE: Self = Self { r: 255, g: 165, b: 0 };
-    pub const PURPLE: Self = Self { r: 128, g: 0, b: 128 };
+    pub const YELLOW: Self = Self {
+        r: 255,
+        g: 255,
+        b: 0,
+    };
+    pub const CYAN: Self = Self {
+        r: 0,
+        g: 255,
+        b: 255,
+    };
+    pub const MAGENTA: Self = Self {
+        r: 255,
+        g: 0,
+        b: 255,
+    };
+    pub const ORANGE: Self = Self {
+        r: 255,
+        g: 165,
+        b: 0,
+    };
+    pub const PURPLE: Self = Self {
+        r: 128,
+        g: 0,
+        b: 128,
+    };
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_color_from_hex() {
         let color = Color::from_hex("#FF0000").unwrap();
         assert_eq!(color, Color::RED);
-        
+
         let color = Color::from_hex("00FF00").unwrap();
         assert_eq!(color, Color::GREEN);
     }
-    
+
     #[test]
     fn test_color_to_hex() {
         assert_eq!(Color::RED.to_hex(), "#FF0000");
         assert_eq!(Color::GREEN.to_hex(), "#00FF00");
         assert_eq!(Color::BLUE.to_hex(), "#0000FF");
     }
-    
+
     #[test]
     fn test_color_serialization() {
         let color = Color::RED;
         let json = serde_json::to_string(&color).unwrap();
         assert_eq!(json, "[255,0,0]");
     }
-    
+
     #[test]
     fn test_color_deserialization() {
         let color: Color = serde_json::from_str("[255,0,0]").unwrap();
         assert_eq!(color, Color::RED);
-        
+
         let color: Color = serde_json::from_str("\"#00FF00\"").unwrap();
         assert_eq!(color, Color::GREEN);
     }

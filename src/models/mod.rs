@@ -1,13 +1,13 @@
-pub mod notification;
 pub mod app;
-pub mod settings;
-pub mod response;
 pub mod color;
 pub mod effect;
+pub mod notification;
+pub mod response;
+pub mod settings;
 
-pub use notification::{Notification, NotificationBuilder};
-pub use app::{CustomApp, AppInfo};
-pub use settings::Settings;
-pub use response::{Stats, LoopInfo};
+pub use app::{AppInfo, CustomApp};
 pub use color::Color;
 pub use effect::{Effect, Transition};
+pub use notification::{Notification, NotificationBuilder};
+pub use response::{LoopInfo, Stats};
+pub use settings::Settings;

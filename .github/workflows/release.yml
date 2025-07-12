@@ -31,10 +31,10 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             VERSION="${{ github.event.inputs.tag }}"
-            VERSION=${VERSION#v}  # Remove 'v' prefix if present
           else
-            VERSION=${GITHUB_REF#refs/tags/v}
+            VERSION=${GITHUB_REF#refs/tags/}
           fi
+          VERSION=${VERSION#v}  # Remove 'v' prefix if present
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 
@@ -123,10 +123,25 @@ jobs:
       - name: Generate shell completions
         run: |
           mkdir -p completions
-          cargo run --release --target ${{ matrix.target }} -- completions bash > completions/awtrix3.bash
-          cargo run --release --target ${{ matrix.target }} -- completions zsh > completions/_awtrix3
-          cargo run --release --target ${{ matrix.target }} -- completions fish > completions/awtrix3.fish
-          cargo run --release --target ${{ matrix.target }} -- completions powershell > completions/awtrix3.ps1
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            BINARY="./target/${{ matrix.target }}/release/awtrix3.exe"
+          else
+            BINARY="./target/${{ matrix.target }}/release/awtrix3"
+          fi
+          $BINARY completions bash > completions/awtrix3.bash || echo "bash completion failed"
+          $BINARY completions zsh > completions/_awtrix3 || echo "zsh completion failed"
+          $BINARY completions fish > completions/awtrix3.fish || echo "fish completion failed"
+          $BINARY completions powershell > completions/awtrix3.ps1 || echo "powershell completion failed"
+
+      - name: Verify required files exist
+        run: |
+          for file in README.md LICENSE-MIT LICENSE-APACHE INSTALL.md; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Required file missing: $file"
+              exit 1
+            fi
+          done
+          echo "✅ All required files present"
 
       - name: Create archive (Unix)
         if: matrix.os != 'windows-latest'
@@ -140,6 +155,19 @@ jobs:
           tar czf ../awtrix3-v${{ needs.create-release.outputs.version }}-${{ matrix.target }}.tar.gz *
           cd ..
           echo "ASSET_PATH=awtrix3-v${{ needs.create-release.outputs.version }}-${{ matrix.target }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Verify required files exist (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          $files = @("README.md", "LICENSE-MIT", "LICENSE-APACHE", "INSTALL.md")
+          foreach ($file in $files) {
+            if (!(Test-Path $file)) {
+              Write-Error "Required file missing: $file"
+              exit 1
+            }
+          }
+          Write-Output "All required files present"
+        shell: powershell
 
       - name: Create archive (Windows)
         if: matrix.os == 'windows-latest'

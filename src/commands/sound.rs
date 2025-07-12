@@ -5,7 +5,7 @@ pub async fn execute(client: awtrix3::Client, command: SoundCommands) -> Result<
     match command {
         SoundCommands::Play { sound, loop_sound } => {
             client.play_sound(&sound).await?;
-            
+
             if loop_sound {
                 println!("Playing sound '{}' (looped)", sound);
                 println!("Note: Loop functionality depends on server implementation");
@@ -16,11 +16,16 @@ pub async fn execute(client: awtrix3::Client, command: SoundCommands) -> Result<
         SoundCommands::Rtttl { rtttl } => {
             // Validate RTTTL format (basic check)
             if !rtttl.contains(':') {
-                return Err(anyhow::anyhow!("Invalid RTTTL format. Expected format: 'name:d=4,o=5,b=140:notes'"));
+                return Err(anyhow::anyhow!(
+                    "Invalid RTTTL format. Expected format: 'name:d=4,o=5,b=140:notes'"
+                ));
             }
-            
+
             client.play_rtttl(&rtttl).await?;
-            println!("Playing RTTTL: {}", rtttl.split(':').next().unwrap_or("Unknown"));
+            println!(
+                "Playing RTTTL: {}",
+                rtttl.split(':').next().unwrap_or("Unknown")
+            );
         }
         SoundCommands::R2d2 => {
             client.play_r2d2().await?;
@@ -42,6 +47,6 @@ pub async fn execute(client: awtrix3::Client, command: SoundCommands) -> Result<
             println!("Custom sounds can be uploaded to the device via web interface.");
         }
     }
-    
+
     Ok(())
 }

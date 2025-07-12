@@ -1,11 +1,11 @@
 //! # AWTRIX3 Rust Client
-//! 
+//!
 //! A modern, async Rust client for AWTRIX3 LED matrix displays.
-//! 
+//!
 //! ## Quick Start
 //! ```no_run
 //! use awtrix3::{Client, Notification};
-//! 
+//!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let client = Client::new("192.168.1.100")?;
@@ -23,23 +23,21 @@
 //! ```
 
 pub mod client;
-pub mod models;
 pub mod error;
+pub mod models;
 
-// Export utility modules for testing only
-#[cfg(test)]
-pub mod utils;
-#[cfg(test)]
+// Export utility modules
 pub mod config;
+pub mod utils;
 
 // Re-exports for convenience
 pub use client::{Client, ClientBuilder};
-pub use models::{Notification, CustomApp, Settings, Color, Effect, Transition};
 pub use error::{AwtrixError, Result};
+pub use models::{Color, CustomApp, Effect, Notification, Settings, Transition};
 
 /// Prelude module for easy imports
 pub mod prelude {
-    pub use crate::{Client, ClientBuilder, Notification, CustomApp, Result};
+    pub use crate::{Client, ClientBuilder, CustomApp, Notification, Result};
 }
 
 #[cfg(test)]
@@ -48,6 +46,6 @@ mod tests {
 
     #[test]
     fn test_version() {
-        assert_eq!(env!("CARGO_PKG_VERSION"), "0.1.0");
+        assert_eq!(env!("CARGO_PKG_VERSION"), "1.0.0");
     }
 }

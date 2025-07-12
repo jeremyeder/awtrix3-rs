@@ -21,19 +21,17 @@ pub async fn execute(client: awtrix3::Client, command: InfoCommands) -> Result<(
                 println!("  {}. {}", i + 1, transition);
             }
         }
-        InfoCommands::Screen { format } => {
-            match format {
-                ScreenFormat::Text => {
-                    println!("Screen information (text format not yet implemented)");
-                }
-                ScreenFormat::Json => {
-                    println!("Screen information (JSON format not yet implemented)");
-                }
-                ScreenFormat::Raw => {
-                    println!("Screen information (raw format not yet implemented)");
-                }
+        InfoCommands::Screen { format } => match format {
+            ScreenFormat::Text => {
+                println!("Screen information (text format not yet implemented)");
             }
-        }
+            ScreenFormat::Json => {
+                println!("Screen information (JSON format not yet implemented)");
+            }
+            ScreenFormat::Raw => {
+                println!("Screen information (raw format not yet implemented)");
+            }
+        },
     }
     Ok(())
 }
