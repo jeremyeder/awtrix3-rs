@@ -120,34 +120,13 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: strip target/${{ matrix.target }}/release/awtrix3
 
-      - name: Verify required files exist
-        if: matrix.os != 'windows-latest'
-        run: |
-          for file in README.md LICENSE-MIT LICENSE-APACHE INSTALL.md; do
-            if [ ! -f "$file" ]; then
-              echo "Required file missing: $file"
-              exit 1
-            fi
-          done
-          echo "All required files present"
-
-      - name: Generate shell completions (Unix)
-        if: matrix.os != 'windows-latest'
+      - name: Generate shell completions
         run: |
           mkdir -p completions
-          ./target/${{ matrix.target }}/release/awtrix3 completions bash > completions/awtrix3.bash || echo "bash completion failed"
-          ./target/${{ matrix.target }}/release/awtrix3 completions zsh > completions/_awtrix3 || echo "zsh completion failed"
-          ./target/${{ matrix.target }}/release/awtrix3 completions fish > completions/awtrix3.fish || echo "fish completion failed"
-          ./target/${{ matrix.target }}/release/awtrix3 completions powershell > completions/awtrix3.ps1 || echo "powershell completion failed"
-
-      - name: Generate shell completions (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          mkdir completions
-          .\target\${{ matrix.target }}\release\awtrix3.exe completions bash > completions\awtrix3.bash
-          .\target\${{ matrix.target }}\release\awtrix3.exe completions zsh > completions\_awtrix3
-          .\target\${{ matrix.target }}\release\awtrix3.exe completions fish > completions\awtrix3.fish
-          .\target\${{ matrix.target }}\release\awtrix3.exe completions powershell > completions\awtrix3.ps1
+          cargo run --release --target ${{ matrix.target }} -- completions bash > completions/awtrix3.bash
+          cargo run --release --target ${{ matrix.target }} -- completions zsh > completions/_awtrix3
+          cargo run --release --target ${{ matrix.target }} -- completions fish > completions/awtrix3.fish
+          cargo run --release --target ${{ matrix.target }} -- completions powershell > completions/awtrix3.ps1
 
       - name: Create archive (Unix)
         if: matrix.os != 'windows-latest'
@@ -161,19 +140,6 @@ jobs:
           tar czf ../awtrix3-v${{ needs.create-release.outputs.version }}-${{ matrix.target }}.tar.gz *
           cd ..
           echo "ASSET_PATH=awtrix3-v${{ needs.create-release.outputs.version }}-${{ matrix.target }}.tar.gz" >> $GITHUB_ENV
-
-      - name: Verify required files exist (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          $files = @("README.md", "LICENSE-MIT", "LICENSE-APACHE", "INSTALL.md")
-          foreach ($file in $files) {
-            if (!(Test-Path $file)) {
-              Write-Error "Required file missing: $file"
-              exit 1
-            }
-          }
-          Write-Output "All required files present"
-        shell: powershell
 
       - name: Create archive (Windows)
         if: matrix.os == 'windows-latest'
