@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release'
+        required: true
+        default: 'v1.0.0'
 
 env:
   CARGO_TERM_COLOR: always
@@ -26,12 +32,12 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release v${{ steps.get_version.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          name: "🎉 AWTRIX3 CLI v${{ steps.get_version.outputs.version }}"
           body: |
             # AWTRIX3 CLI v${{ steps.get_version.outputs.version }}
             
@@ -39,17 +45,23 @@ jobs:
             
             ## Installation
             
-            ### From Binary
-            Download the appropriate binary for your platform from the assets below.
-            
-            ### From Source
+            ### Quick Install
             ```bash
+            # Unix/Linux/macOS
+            curl -sSL https://raw.githubusercontent.com/jeremyeder/awtrix3-rs/main/install.sh | bash
+            
+            # Windows PowerShell
+            iwr -useb https://raw.githubusercontent.com/jeremyeder/awtrix3-rs/main/install.ps1 | iex
+            
+            # Cargo
             cargo install awtrix3
             ```
             
+            ### From Binary
+            Download the appropriate binary for your platform from the assets below.
+            
             ## Changes
             See [CHANGELOG.md](https://github.com/jeremyeder/awtrix3-rs/blob/main/CHANGELOG.md) for detailed changes.
-            
           draft: false
           prerelease: false
 
@@ -146,25 +158,15 @@ jobs:
           fi
         shell: bash
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ${{ env.ASSET_PATH }}
-          asset_name: ${{ env.ASSET_PATH }}
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Checksum
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ${{ env.ASSET_PATH }}.sha256
-          asset_name: ${{ env.ASSET_PATH }}.sha256
-          asset_content_type: text/plain
+          tag_name: v${{ needs.create-release.outputs.version }}
+          files: |
+            ${{ env.ASSET_PATH }}
+            ${{ env.ASSET_PATH }}.sha256
 
   upload-install-scripts:
     name: Upload Installation Scripts
@@ -177,40 +179,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Upload Unix Install Script
-        uses: actions/upload-release-asset@v1
+      - name: Upload Installation Assets
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: install.sh
-          asset_name: install.sh
-          asset_content_type: text/plain
-
-      - name: Upload Windows Install Script
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: install.ps1
-          asset_name: install.ps1
-          asset_content_type: text/plain
-
-      - name: Upload Homebrew Formula
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: Formula/awtrix3.rb
-          asset_name: awtrix3.rb
-          asset_content_type: text/plain
+          tag_name: v${{ needs.create-release.outputs.version }}
+          files: |
+            install.sh
+            install.ps1
+            Formula/awtrix3.rb
 
   publish-crates:
     name: Publish to crates.io
     runs-on: ubuntu-latest
     needs: [create-release, build-release]
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout repository
@@ -219,6 +204,25 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Check if CARGO_REGISTRY_TOKEN is available
+        env:
+          CARGO_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          if [ -z "$CARGO_TOKEN" ]; then
+            echo "❌ CARGO_REGISTRY_TOKEN secret is not set"
+            echo "To publish to crates.io, add your crates.io API token as a repository secret"
+            echo "Repository Settings → Secrets and variables → Actions → New repository secret"
+            echo "Name: CARGO_REGISTRY_TOKEN"
+            echo "Value: Your crates.io API token"
+            exit 1
+          else
+            echo "✅ CARGO_REGISTRY_TOKEN is available"
+          fi
+
       - name: Publish to crates.io
-        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          echo "Publishing awtrix3 v${{ needs.create-release.outputs.version }} to crates.io..."
+          cargo publish --token $CARGO_REGISTRY_TOKEN
         continue-on-error: true  # May fail if version already exists
