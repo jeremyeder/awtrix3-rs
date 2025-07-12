@@ -15,70 +15,9 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  create-release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      actions: read
-      metadata: read
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      version: ${{ steps.get_version.outputs.version }}
-    steps:
-      - name: Get version from tag
-        id: get_version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="${{ github.event.inputs.tag }}"
-          else
-            VERSION=${GITHUB_REF#refs/tags/}
-          fi
-          VERSION=${VERSION#v}  # Remove 'v' prefix if present
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
-
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ steps.get_version.outputs.version }}
-          name: "🎉 AWTRIX3 CLI v${{ steps.get_version.outputs.version }}"
-          body: |
-            # AWTRIX3 CLI v${{ steps.get_version.outputs.version }}
-            
-            A modern, async Rust CLI for controlling AWTRIX3 LED matrix displays.
-            
-            ## Installation
-            
-            ### Quick Install
-            ```bash
-            # Unix/Linux/macOS
-            curl -sSL https://raw.githubusercontent.com/jeremyeder/awtrix3-rs/master/install.sh | bash
-            
-            # Windows PowerShell
-            iwr -useb https://raw.githubusercontent.com/jeremyeder/awtrix3-rs/master/install.ps1 | iex
-            
-            # Cargo
-            cargo install awtrix3
-            ```
-            
-            ### From Binary
-            Download the appropriate binary for your platform from the assets below.
-            
-            ## Changes
-            See [CHANGELOG.md](https://github.com/jeremyeder/awtrix3-rs/blob/master/CHANGELOG.md) for detailed changes.
-          draft: false
-          prerelease: false
-
   build-release:
     name: Build Release
-    needs: create-release
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: write
     strategy:
       matrix:
         include:
@@ -91,9 +30,6 @@ jobs:
           - target: aarch64-apple-darwin
             os: macos-latest
             name: awtrix3-macos-aarch64
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-            name: awtrix3-windows-x86_64.exe
     
     steps:
       - name: Checkout repository
@@ -104,137 +40,8 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      - name: Cache Cargo dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
-
       - name: Build release binary
-        run: cargo build --release --target ${{ matrix.target }} --all-features
+        run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Strip binary (Linux and macOS)
-        if: matrix.os != 'windows-latest'
-        run: strip target/${{ matrix.target }}/release/awtrix3
-
-      - name: Generate shell completions
-        run: |
-          mkdir -p completions
-          cargo run --release --target ${{ matrix.target }} -- completions bash > completions/awtrix3.bash
-          cargo run --release --target ${{ matrix.target }} -- completions zsh > completions/_awtrix3
-          cargo run --release --target ${{ matrix.target }} -- completions fish > completions/awtrix3.fish
-          cargo run --release --target ${{ matrix.target }} -- completions powershell > completions/awtrix3.ps1
-
-      - name: Create archive (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          mkdir -p dist
-          cp target/${{ matrix.target }}/release/awtrix3 dist/
-          cp README.md LICENSE-MIT LICENSE-APACHE INSTALL.md dist/
-          cp -r completions dist/
-          cp -r examples dist/
-          cd dist
-          tar czf ../awtrix3-v${{ needs.create-release.outputs.version }}-${{ matrix.target }}.tar.gz *
-          cd ..
-          echo "ASSET_PATH=awtrix3-v${{ needs.create-release.outputs.version }}-${{ matrix.target }}.tar.gz" >> $GITHUB_ENV
-
-      - name: Create archive (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          mkdir dist
-          copy target\${{ matrix.target }}\release\awtrix3.exe dist\
-          copy README.md dist\
-          copy LICENSE-MIT dist\
-          copy LICENSE-APACHE dist\
-          copy INSTALL.md dist\
-          xcopy completions dist\completions\ /E /I
-          xcopy examples dist\examples\ /E /I
-          cd dist
-          7z a ..\awtrix3-v${{ needs.create-release.outputs.version }}-${{ matrix.target }}.zip *
-          cd ..
-          echo "ASSET_PATH=awtrix3-v${{ needs.create-release.outputs.version }}-${{ matrix.target }}.zip" >> $env:GITHUB_ENV
-
-      - name: Generate checksums (Unix)
-        if: matrix.os != 'windows-latest'
-        run: shasum -a 256 "${{ env.ASSET_PATH }}" > "${{ env.ASSET_PATH }}.sha256"
-        shell: bash
-
-      - name: Generate checksums (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          $hash = Get-FileHash -Algorithm SHA256 "${{ env.ASSET_PATH }}"
-          $output = $hash.Hash.ToLower() + "  ${{ env.ASSET_PATH }}"
-          $output | Out-File -FilePath "${{ env.ASSET_PATH }}.sha256" -Encoding ASCII -NoNewline
-        shell: powershell
-
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ needs.create-release.outputs.version }}
-          files: |
-            ${{ env.ASSET_PATH }}
-            ${{ env.ASSET_PATH }}.sha256
-
-  upload-install-scripts:
-    name: Upload Installation Scripts
-    runs-on: ubuntu-latest
-    needs: create-release
-    permissions:
-      contents: write
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Upload Installation Assets
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ needs.create-release.outputs.version }}
-          files: |
-            install.sh
-            install.ps1
-            Formula/awtrix3.rb
-
-  publish-crates:
-    name: Publish to crates.io
-    runs-on: ubuntu-latest
-    needs: [create-release, build-release]
-    permissions:
-      contents: read
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Check if CARGO_REGISTRY_TOKEN is available
-        env:
-          CARGO_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          if [ -z "$CARGO_TOKEN" ]; then
-            echo "❌ CARGO_REGISTRY_TOKEN secret is not set"
-            echo "To publish to crates.io, add your crates.io API token as a repository secret"
-            echo "Repository Settings → Secrets and variables → Actions → New repository secret"
-            echo "Name: CARGO_REGISTRY_TOKEN"
-            echo "Value: Your crates.io API token"
-            exit 1
-          else
-            echo "✅ CARGO_REGISTRY_TOKEN is available"
-          fi
-
-      - name: Publish to crates.io
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          echo "Publishing awtrix3 v${{ needs.create-release.outputs.version }} to crates.io..."
-          cargo publish --token $CARGO_REGISTRY_TOKEN
-        continue-on-error: true  # May fail if version already exists
+      - name: Test binary
+        run: ./target/${{ matrix.target }}/release/awtrix3 --version
