@@ -49,8 +49,12 @@ jobs:
           TAG_VERSION="${{ steps.get_version.outputs.version }}"
           echo "Cargo.toml version: $CARGO_VERSION"
           echo "Git tag version: $TAG_VERSION"
-          if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
-            echo "❌ Version mismatch: Cargo.toml ($CARGO_VERSION) != Git tag ($TAG_VERSION)"
+          
+          # For pre-releases, strip the pre-release suffix from tag for comparison
+          BASE_TAG_VERSION=$(echo "$TAG_VERSION" | sed 's/-.*$//')
+          
+          if [ "$CARGO_VERSION" != "$TAG_VERSION" ] && [ "$CARGO_VERSION" != "$BASE_TAG_VERSION" ]; then
+            echo "❌ Version mismatch: Cargo.toml ($CARGO_VERSION) != Git tag ($TAG_VERSION or $BASE_TAG_VERSION)"
             exit 1
           fi
           echo "✅ Version match confirmed"
@@ -252,12 +256,12 @@ jobs:
 
       - name: Create Pre-Release
         id: create_prerelease
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Pre-Release v${{ needs.validate-version.outputs.version }}
+          tag_name: v${{ needs.validate-version.outputs.version }}
+          name: "🚧 Pre-Release v${{ needs.validate-version.outputs.version }}"
           body: |
             # AWTRIX3 CLI Pre-Release v${{ needs.validate-version.outputs.version }}
             

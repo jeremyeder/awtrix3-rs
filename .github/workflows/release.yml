@@ -28,7 +28,15 @@ jobs:
     steps:
       - name: Get version from tag
         id: get_version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+            VERSION=${VERSION#v}  # Remove 'v' prefix if present
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
 
       - name: Create Release
         id: create_release
@@ -36,7 +44,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: v${{ steps.get_version.outputs.version }}
           name: "🎉 AWTRIX3 CLI v${{ steps.get_version.outputs.version }}"
           body: |
             # AWTRIX3 CLI v${{ steps.get_version.outputs.version }}
@@ -48,10 +56,10 @@ jobs:
             ### Quick Install
             ```bash
             # Unix/Linux/macOS
-            curl -sSL https://raw.githubusercontent.com/jeremyeder/awtrix3-rs/main/install.sh | bash
+            curl -sSL https://raw.githubusercontent.com/jeremyeder/awtrix3-rs/master/install.sh | bash
             
             # Windows PowerShell
-            iwr -useb https://raw.githubusercontent.com/jeremyeder/awtrix3-rs/main/install.ps1 | iex
+            iwr -useb https://raw.githubusercontent.com/jeremyeder/awtrix3-rs/master/install.ps1 | iex
             
             # Cargo
             cargo install awtrix3
@@ -61,7 +69,7 @@ jobs:
             Download the appropriate binary for your platform from the assets below.
             
             ## Changes
-            See [CHANGELOG.md](https://github.com/jeremyeder/awtrix3-rs/blob/main/CHANGELOG.md) for detailed changes.
+            See [CHANGELOG.md](https://github.com/jeremyeder/awtrix3-rs/blob/master/CHANGELOG.md) for detailed changes.
           draft: false
           prerelease: false
 
@@ -152,7 +160,7 @@ jobs:
       - name: Generate checksums
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            sha256sum "${{ env.ASSET_PATH }}" > "${{ env.ASSET_PATH }}.sha256"
+            powershell -Command "Get-FileHash -Algorithm SHA256 '${{ env.ASSET_PATH }}' | Select-Object Hash | ForEach-Object { \$_.Hash.ToLower() + '  ${{ env.ASSET_PATH }}' }" > "${{ env.ASSET_PATH }}.sha256"
           else
             shasum -a 256 "${{ env.ASSET_PATH }}" > "${{ env.ASSET_PATH }}.sha256"
           fi
