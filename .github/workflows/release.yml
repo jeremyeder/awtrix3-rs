@@ -120,6 +120,17 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: strip target/${{ matrix.target }}/release/awtrix3
 
+      - name: Verify required files exist
+        if: matrix.os != 'windows-latest'
+        run: |
+          for file in README.md LICENSE-MIT LICENSE-APACHE INSTALL.md; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Required file missing: $file"
+              exit 1
+            fi
+          done
+          echo "✅ All required files present"
+
       - name: Generate shell completions
         run: |
           mkdir -p completions
@@ -132,16 +143,6 @@ jobs:
           $BINARY completions zsh > completions/_awtrix3 || echo "zsh completion failed"
           $BINARY completions fish > completions/awtrix3.fish || echo "fish completion failed"
           $BINARY completions powershell > completions/awtrix3.ps1 || echo "powershell completion failed"
-
-      - name: Verify required files exist
-        run: |
-          for file in README.md LICENSE-MIT LICENSE-APACHE INSTALL.md; do
-            if [ ! -f "$file" ]; then
-              echo "❌ Required file missing: $file"
-              exit 1
-            fi
-          done
-          echo "✅ All required files present"
 
       - name: Create archive (Unix)
         if: matrix.os != 'windows-latest'
