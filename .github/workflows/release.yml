@@ -157,14 +157,18 @@ jobs:
           cd ..
           echo "ASSET_PATH=awtrix3-v${{ needs.create-release.outputs.version }}-${{ matrix.target }}.zip" >> $env:GITHUB_ENV
 
-      - name: Generate checksums
-        run: |
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            powershell -Command "Get-FileHash -Algorithm SHA256 '${{ env.ASSET_PATH }}' | Select-Object Hash | ForEach-Object { \$_.Hash.ToLower() + '  ${{ env.ASSET_PATH }}' }" > "${{ env.ASSET_PATH }}.sha256"
-          else
-            shasum -a 256 "${{ env.ASSET_PATH }}" > "${{ env.ASSET_PATH }}.sha256"
-          fi
+      - name: Generate checksums (Unix)
+        if: matrix.os != 'windows-latest'
+        run: shasum -a 256 "${{ env.ASSET_PATH }}" > "${{ env.ASSET_PATH }}.sha256"
         shell: bash
+
+      - name: Generate checksums (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          $hash = Get-FileHash -Algorithm SHA256 "${{ env.ASSET_PATH }}"
+          $output = $hash.Hash.ToLower() + "  ${{ env.ASSET_PATH }}"
+          $output | Out-File -FilePath "${{ env.ASSET_PATH }}.sha256" -Encoding ASCII -NoNewline
+        shell: powershell
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
