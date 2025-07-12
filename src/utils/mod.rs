@@ -1,27 +1,26 @@
 pub mod discovery;
 
-use crate::{AwtrixError, Result, Color};
+use anyhow::Result;
+use awtrix3::Color;
 
 /// Parse a color from various formats
 pub fn parse_color(input: &str) -> Result<Color> {
     if input.starts_with('#') || input.len() == 6 {
         // Hex format
-        Color::from_hex(input)
+        Color::from_hex(input).map_err(|e| anyhow::anyhow!("Invalid hex color: {}", e))
     } else if input.contains(',') {
         // RGB format like "255,0,0"
         let parts: Vec<&str> = input.split(',').collect();
         if parts.len() != 3 {
-            return Err(AwtrixError::InvalidColor(
-                "RGB format must be r,g,b".to_string()
-            ));
+            return Err(anyhow::anyhow!("RGB format must be r,g,b"));
         }
         
         let r = parts[0].trim().parse::<u8>()
-            .map_err(|_| AwtrixError::InvalidColor("Invalid red value".to_string()))?;
+            .map_err(|_| anyhow::anyhow!("Invalid red value"))?;
         let g = parts[1].trim().parse::<u8>()
-            .map_err(|_| AwtrixError::InvalidColor("Invalid green value".to_string()))?;
+            .map_err(|_| anyhow::anyhow!("Invalid green value"))?;
         let b = parts[2].trim().parse::<u8>()
-            .map_err(|_| AwtrixError::InvalidColor("Invalid blue value".to_string()))?;
+            .map_err(|_| anyhow::anyhow!("Invalid blue value"))?;
         
         Ok(Color::new(r, g, b))
     } else {
@@ -37,9 +36,7 @@ pub fn parse_color(input: &str) -> Result<Color> {
             "magenta" => Ok(Color::MAGENTA),
             "orange" => Ok(Color::ORANGE),
             "purple" => Ok(Color::PURPLE),
-            _ => Err(AwtrixError::InvalidColor(
-                format!("Unknown color: {}", input)
-            )),
+            _ => Err(anyhow::anyhow!("Unknown color: {}", input)),
         }
     }
 }

@@ -26,7 +26,7 @@ pub mod client;
 pub mod models;
 pub mod error;
 
-// Export utility modules for testing
+// Export utility modules for testing only
 #[cfg(test)]
 pub mod utils;
 #[cfg(test)]

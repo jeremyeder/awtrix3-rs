@@ -1,5 +1,5 @@
 use clap::Parser;
-use colored::*;
+use colored::{Colorize, control};
 use anyhow::Result;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
     
     // Set up colored output
     if !json_output {
-        colored::control::set_override(true);
+        control::set_override(true);
     }
     
     // Load configuration
