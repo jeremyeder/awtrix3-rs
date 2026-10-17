@@ -104,6 +104,18 @@ pub enum Commands {
 
 impl Cli {
     pub async fn execute(self, config: Config) -> Result<()> {
+        // Device and Completions commands don't need a configured device host
+        match self.command {
+            Commands::Device { command } => {
+                return crate::commands::device::execute(command, config).await;
+            }
+            Commands::Completions { shell } => {
+                Self::generate_completions(shell);
+                return Ok(());
+            }
+            _ => {}
+        }
+
         // Get device host
         let device_host = self.get_device_host(&config)?;
 
@@ -127,11 +139,7 @@ impl Cli {
             Commands::Settings { command } => {
                 crate::commands::settings::execute(client, command).await
             }
-            Commands::Device { command } => crate::commands::device::execute(command, config).await,
-            Commands::Completions { shell } => {
-                Self::generate_completions(shell);
-                Ok(())
-            }
+            Commands::Device { .. } | Commands::Completions { .. } => unreachable!(),
         }
     }
 
