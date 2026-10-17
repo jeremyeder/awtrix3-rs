@@ -22,10 +22,8 @@ pub async fn execute(client: awtrix3::Client, args: NotifyArgs) -> Result<()> {
         let text_preview = notification.text.clone();
 
         client.notify(notification).await?;
-        println!(
-            "Notification sent: {}",
-            text_preview.as_deref().unwrap_or("(no text)")
-        );
+        let text = text_preview.as_deref().unwrap_or("(no text)");
+        println!("Notification sent: {text}");
     }
 
     Ok(())

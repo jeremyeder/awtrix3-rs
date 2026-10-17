@@ -22,17 +22,16 @@ impl Color {
 
         if hex.len() != 6 {
             return Err(AwtrixError::InvalidColor(format!(
-                "Hex color must be 6 characters, got: {}",
-                hex
+                "Hex color must be 6 characters, got: {hex}"
             )));
         }
 
         let r = u8::from_str_radix(&hex[0..2], 16)
-            .map_err(|_| AwtrixError::InvalidColor(format!("Invalid hex color: {}", hex)))?;
+            .map_err(|_| AwtrixError::InvalidColor(format!("Invalid hex color: {hex}")))?;
         let g = u8::from_str_radix(&hex[2..4], 16)
-            .map_err(|_| AwtrixError::InvalidColor(format!("Invalid hex color: {}", hex)))?;
+            .map_err(|_| AwtrixError::InvalidColor(format!("Invalid hex color: {hex}")))?;
         let b = u8::from_str_radix(&hex[4..6], 16)
-            .map_err(|_| AwtrixError::InvalidColor(format!("Invalid hex color: {}", hex)))?;
+            .map_err(|_| AwtrixError::InvalidColor(format!("Invalid hex color: {hex}")))?;
 
         Ok(Self { r, g, b })
     }

@@ -13,7 +13,7 @@ pub async fn execute(client: awtrix3::Client, args: IndicatorArgs) -> Result<()>
             .parse()
             .map_err(|_| anyhow::anyhow!("Invalid indicator number. Use 1-3 or 'all'"))?;
 
-        if num < 1 || num > 3 {
+        if !(1..=3).contains(&num) {
             return Err(anyhow::anyhow!("Indicator number must be 1-3"));
         }
 
@@ -31,12 +31,13 @@ pub async fn execute(client: awtrix3::Client, args: IndicatorArgs) -> Result<()>
 
     // Apply to each indicator
     for indicator in indicators {
-        client.set_indicator(indicator, color.clone()).await?;
+        client.set_indicator(indicator, color).await?;
 
         if args.off {
-            println!("Indicator {} turned OFF", indicator);
+            println!("Indicator {indicator} turned OFF");
         } else if let Some(c) = &color {
-            println!("Indicator {} set to color {}", indicator, c.to_hex());
+            let color_hex = c.to_hex();
+            println!("Indicator {indicator} set to color {color_hex}");
         }
     }
 

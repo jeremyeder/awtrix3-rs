@@ -168,7 +168,7 @@ impl super::Client {
 
     /// Create or update custom app
     pub async fn create_custom_app(&self, name: &str, app: &CustomApp) -> Result<()> {
-        let url = format!("/api/custom?name={}", name);
+        let url = format!("/api/custom?name={name}");
         self.post_json(&url, app).await?;
         Ok(())
     }
@@ -176,7 +176,7 @@ impl super::Client {
     /// Delete custom app
     pub async fn delete_custom_app(&self, name: &str) -> Result<()> {
         // Send empty payload to delete
-        let url = format!("/api/custom?name={}", name);
+        let url = format!("/api/custom?name={name}");
         let empty = serde_json::json!({});
         self.post_json(&url, &empty).await?;
         Ok(())
@@ -212,7 +212,7 @@ impl super::Client {
 
     /// Set indicator
     pub async fn set_indicator(&self, indicator: u8, color: Option<Color>) -> Result<()> {
-        let endpoint = format!("/api/indicator{}", indicator);
+        let endpoint = format!("/api/indicator{indicator}");
 
         if let Some(color) = color {
             let payload = serde_json::json!({ "color": color });
@@ -285,8 +285,6 @@ impl super::Client {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::models::*;
 
     #[tokio::test]
     async fn test_client_creation() {

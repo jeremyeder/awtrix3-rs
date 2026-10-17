@@ -8,7 +8,7 @@ pub async fn execute(command: DeviceCommands, mut config: Config) -> Result<()> 
         #[cfg(feature = "discovery")]
         DeviceCommands::Discover { timeout } => {
             println!("Discovering AWTRIX3 devices on network...");
-            println!("Timeout: {} seconds", timeout);
+            println!("Timeout: {timeout} seconds");
 
             let devices =
                 crate::utils::discovery::discover_devices(Duration::from_secs(timeout)).await?;
@@ -17,21 +17,30 @@ pub async fn execute(command: DeviceCommands, mut config: Config) -> Result<()> 
                 println!("No AWTRIX3 devices found on the network.");
                 println!("Make sure devices are powered on and connected to the same network.");
             } else {
-                println!("Found {} device(s):", devices.len());
+                let devices_len = devices.len();
+                println!("Found {devices_len} device(s):");
                 for device in devices {
-                    println!("  📱 {} ({}:{})", device.name, device.host, device.port);
+                    println!(
+                        "  📱 {name} ({host}:{port})",
+                        name = device.name,
+                        host = device.host,
+                        port = device.port
+                    );
 
                     // Test connectivity
                     if let Ok(client) = awtrix3::Client::new(&device.host) {
                         match client.get_version().await {
-                            Ok(version) => println!("     ✅ Online - Version: {}", version.trim()),
+                            Ok(version) => {
+                                let version = version.trim();
+                                println!("     ✅ Online - Version: {version}");
+                            }
                             Err(_) => println!("     ❌ Cannot connect to API"),
                         }
                     } else {
                         println!("     ❌ Invalid host");
                     }
                 }
-                println!("");
+                println!();
                 println!("To add a device, use: awtrix device add <name> <host>");
             }
         }
@@ -49,18 +58,21 @@ pub async fn execute(command: DeviceCommands, mut config: Config) -> Result<()> 
             default,
         } => {
             // Test connectivity first
-            println!("Testing connection to {}...", host);
+            println!("Testing connection to {host}...");
 
             match awtrix3::Client::new(&host) {
                 Ok(client) => {
                     match client.get_version().await {
                         Ok(version) => {
-                            println!("✅ Connected successfully - Version: {}", version.trim());
+                            {
+                                let version = version.trim();
+                                println!("✅ Connected successfully - Version: {version}");
+                            }
 
                             // Add device to config
                             let device_config = DeviceConfig {
                                 host: host.clone(),
-                                name: format!("AWTRIX3 {}", name),
+                                name: format!("AWTRIX3 {name}"),
                                 timeout: 30,
                                 retries: 3,
                             };
@@ -69,24 +81,22 @@ pub async fn execute(command: DeviceCommands, mut config: Config) -> Result<()> 
 
                             if default {
                                 config.default_device = Some(name.clone());
-                                println!("Set '{}' as default device", name);
+                                println!("Set '{name}' as default device");
                             }
 
                             // Save config
                             config::save_config(&config)?;
-                            println!("Device '{}' added successfully", name);
+                            println!("Device '{name}' added successfully");
                         }
                         Err(e) => {
                             return Err(anyhow::anyhow!(
-                                "Cannot connect to AWTRIX3 API at {}: {}",
-                                host,
-                                e
+                                "Cannot connect to AWTRIX3 API at {host}: {e}"
                             ));
                         }
                     }
                 }
                 Err(e) => {
-                    return Err(anyhow::anyhow!("Invalid host '{}': {}", host, e));
+                    return Err(anyhow::anyhow!("Invalid host '{host}': {e}"));
                 }
             }
         }
@@ -104,17 +114,16 @@ pub async fn execute(command: DeviceCommands, mut config: Config) -> Result<()> 
                         // Set first remaining device as default
                         let new_default = config.devices.keys().next().unwrap().clone();
                         config.default_device = Some(new_default.clone());
-                        println!("Set '{}' as new default device", new_default);
+                        println!("Set '{new_default}' as new default device");
                     }
                 }
 
                 // Save config
                 config::save_config(&config)?;
-                println!("Device '{}' removed successfully", name);
+                println!("Device '{name}' removed successfully");
             } else {
                 return Err(anyhow::anyhow!(
-                    "Device '{}' not found in configuration",
-                    name
+                    "Device '{name}' not found in configuration"
                 ));
             }
         }
@@ -127,26 +136,29 @@ pub async fn execute(command: DeviceCommands, mut config: Config) -> Result<()> 
             }
 
             println!("Configured AWTRIX3 Devices:");
-            println!("");
+            println!();
 
             for (name, device) in &config.devices {
                 let is_default = config.default_device.as_ref() == Some(name);
                 let default_marker = if is_default { " (default)" } else { "" };
 
-                println!("📱 {} - {}{}", name, device.host, default_marker);
-                println!("   Name: {}", device.name);
+                println!("📱 {name} - {host}{default_marker}", host = device.host);
+                println!("   Name: {name}", name = device.name);
 
                 // Test connectivity
                 print!("   Status: ");
                 match awtrix3::Client::new(&device.host) {
                     Ok(client) => match client.get_version().await {
-                        Ok(version) => println!("✅ Online - Version: {}", version.trim()),
+                        Ok(version) => {
+                            let version = version.trim();
+                            println!("✅ Online - Version: {version}");
+                        }
                         Err(_) => println!("❌ Offline or unreachable"),
                     },
                     Err(_) => println!("❌ Invalid configuration"),
                 }
 
-                println!("");
+                println!();
             }
         }
 
@@ -154,7 +166,7 @@ pub async fn execute(command: DeviceCommands, mut config: Config) -> Result<()> 
             let device_config = if let Some(device_name) = device {
                 // Test specific device
                 config.devices.get(&device_name).ok_or_else(|| {
-                    anyhow::anyhow!("Device '{}' not found in configuration", device_name)
+                    anyhow::anyhow!("Device '{device_name}' not found in configuration")
                 })?
             } else {
                 // Test default device
@@ -164,16 +176,13 @@ pub async fn execute(command: DeviceCommands, mut config: Config) -> Result<()> 
                     .ok_or_else(|| anyhow::anyhow!("No default device configured"))?;
 
                 config.devices.get(default_name).ok_or_else(|| {
-                    anyhow::anyhow!(
-                        "Default device '{}' not found in configuration",
-                        default_name
-                    )
+                    anyhow::anyhow!("Default device '{default_name}' not found in configuration")
                 })?
             };
 
-            println!("Testing device: {}", device_config.name);
-            println!("Host: {}", device_config.host);
-            println!("");
+            println!("Testing device: {name}", name = device_config.name);
+            println!("Host: {host}", host = device_config.host);
+            println!();
 
             let start = std::time::Instant::now();
 
@@ -185,14 +194,12 @@ pub async fn execute(command: DeviceCommands, mut config: Config) -> Result<()> 
                     match client.get_version().await {
                         Ok(version) => {
                             let response_time = start.elapsed();
-                            println!(
-                                "✅ Version API: {} ({}ms)",
-                                version.trim(),
-                                response_time.as_millis()
-                            );
+                            let version = version.trim();
+                            let response_time_ms = response_time.as_millis();
+                            println!("✅ Version API: {version} ({response_time_ms}ms)");
                         }
                         Err(e) => {
-                            println!("❌ Version API failed: {}", e);
+                            println!("❌ Version API failed: {e}");
                             return Ok(());
                         }
                     }
@@ -202,19 +209,21 @@ pub async fn execute(command: DeviceCommands, mut config: Config) -> Result<()> 
                     match client.get_stats().await {
                         Ok(_) => {
                             let response_time = stats_start.elapsed();
-                            println!("✅ Stats API: OK ({}ms)", response_time.as_millis());
+                            let response_time_ms = response_time.as_millis();
+                            println!("✅ Stats API: OK ({response_time_ms}ms)");
                         }
                         Err(e) => {
-                            println!("⚠️  Stats API: {}", e);
+                            println!("⚠️  Stats API: {e}");
                         }
                     }
 
-                    println!("");
+                    println!();
                     println!("✅ Device test completed successfully");
-                    println!("Total response time: {}ms", start.elapsed().as_millis());
+                    let total_time_ms = start.elapsed().as_millis();
+                    println!("Total response time: {total_time_ms}ms");
                 }
                 Err(e) => {
-                    println!("❌ Failed to create client: {}", e);
+                    println!("❌ Failed to create client: {e}");
                 }
             }
         }

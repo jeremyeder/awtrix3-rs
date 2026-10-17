@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Main configuration structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     /// Default device to use if none specified
     pub default_device: Option<String>,
@@ -51,16 +51,6 @@ pub struct Preferences {
     /// Log level
     #[serde(default = "default_log_level")]
     pub log_level: String,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            default_device: None,
-            devices: HashMap::new(),
-            preferences: Preferences::default(),
-        }
-    }
 }
 
 impl Default for Preferences {
@@ -131,6 +121,7 @@ fn get_config_path() -> Result<PathBuf> {
 }
 
 /// Add a device to the configuration
+#[allow(dead_code)]
 pub fn add_device(
     name: String,
     host: String,
@@ -157,6 +148,7 @@ pub fn add_device(
 }
 
 /// Remove a device from the configuration
+#[allow(dead_code)]
 pub fn remove_device(name: &str) -> Result<()> {
     let mut config = load_config()?;
 
@@ -174,7 +166,6 @@ pub fn remove_device(name: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
 
     #[test]
     fn test_default_config() {
@@ -186,8 +177,10 @@ mod tests {
 
     #[test]
     fn test_config_serialization() {
-        let mut config = Config::default();
-        config.default_device = Some("test".to_string());
+        let mut config = Config {
+            default_device: Some("test".to_string()),
+            ..Config::default()
+        };
 
         let device = DeviceConfig {
             host: "192.168.1.100".to_string(),

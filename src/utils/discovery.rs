@@ -9,6 +9,7 @@ pub struct DiscoveredDevice {
     pub name: String,
     pub host: String,
     pub port: u16,
+    #[allow(dead_code)]
     pub txt_records: std::collections::HashMap<String, String>,
 }
 
@@ -23,23 +24,23 @@ pub async fn discover_devices(timeout: Duration) -> Result<Vec<DiscoveredDevice>
     let start = std::time::Instant::now();
 
     while start.elapsed() < timeout {
-        if let Ok(event) = receiver.recv_timeout(Duration::from_millis(100)) {
-            if let ServiceEvent::ServiceResolved(info) = event {
-                // Check if this is an AWTRIX device by looking at TXT records or hostname
-                if is_awtrix_device(&info) {
-                    let device = DiscoveredDevice {
-                        name: info.get_hostname().to_string(),
-                        host: info
-                            .get_addresses()
-                            .iter()
-                            .next()
-                            .map(|addr| addr.to_string())
-                            .unwrap_or_default(),
-                        port: info.get_port(),
-                        txt_records: std::collections::HashMap::new(), // TODO: Fix TXT records parsing
-                    };
-                    devices.push(device);
-                }
+        if let Ok(ServiceEvent::ServiceResolved(info)) =
+            receiver.recv_timeout(Duration::from_millis(100))
+        {
+            // Check if this is an AWTRIX device by looking at TXT records or hostname
+            if is_awtrix_device(&info) {
+                let device = DiscoveredDevice {
+                    name: info.get_hostname().to_string(),
+                    host: info
+                        .get_addresses()
+                        .iter()
+                        .next()
+                        .map(|addr| addr.to_string())
+                        .unwrap_or_default(),
+                    port: info.get_port(),
+                    txt_records: std::collections::HashMap::new(), // TODO: Fix TXT records parsing
+                };
+                devices.push(device);
             }
         }
     }

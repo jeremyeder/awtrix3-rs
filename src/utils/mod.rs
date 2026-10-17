@@ -10,13 +10,14 @@ pub fn parse_color_placeholder(input: &str) -> Result<String> {
 }
 
 /// Format output based on CLI preferences
+#[allow(dead_code)]
 pub fn format_output<T: serde::Serialize>(data: &T, json: bool) -> Result<String> {
     if json {
         Ok(serde_json::to_string_pretty(data)?)
     } else {
         // For non-JSON output, serialize to JSON and format it nicely
         let json_value: serde_json::Value = serde_json::to_value(data)?;
-        Ok(format!("{:#}", json_value))
+        Ok(format!("{json_value:#}"))
     }
 }
 

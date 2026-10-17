@@ -11,10 +11,8 @@ pub async fn execute(client: awtrix3::Client, args: PowerArgs) -> Result<()> {
     client.set_power(power_on).await?;
 
     // Provide user feedback
-    println!(
-        "Power state set to: {}",
-        if power_on { "ON" } else { "OFF" }
-    );
+    let state = if power_on { "ON" } else { "OFF" };
+    println!("Power state set to: {state}");
 
     Ok(())
 }
@@ -31,7 +29,8 @@ pub async fn sleep(client: awtrix3::Client, args: SleepArgs) -> Result<()> {
     client.set_sleep(args.duration).await?;
 
     // Provide user feedback
-    println!("Sleep mode set for {} seconds", args.duration);
+    let duration = args.duration;
+    println!("Sleep mode set for {duration} seconds");
 
     Ok(())
 }

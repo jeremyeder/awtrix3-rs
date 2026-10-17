@@ -7,10 +7,10 @@ pub async fn execute(client: awtrix3::Client, command: SoundCommands) -> Result<
             client.play_sound(&sound).await?;
 
             if loop_sound {
-                println!("Playing sound '{}' (looped)", sound);
+                println!("Playing sound '{sound}' (looped)");
                 println!("Note: Loop functionality depends on server implementation");
             } else {
-                println!("Playing sound '{}'", sound);
+                println!("Playing sound '{sound}'");
             }
         }
         SoundCommands::Rtttl { rtttl } => {
@@ -22,10 +22,8 @@ pub async fn execute(client: awtrix3::Client, command: SoundCommands) -> Result<
             }
 
             client.play_rtttl(&rtttl).await?;
-            println!(
-                "Playing RTTTL: {}",
-                rtttl.split(':').next().unwrap_or("Unknown")
-            );
+            let rtttl_name = rtttl.split(':').next().unwrap_or("Unknown");
+            println!("Playing RTTTL: {rtttl_name}");
         }
         SoundCommands::R2d2 => {
             client.play_r2d2().await?;
@@ -42,7 +40,7 @@ pub async fn execute(client: awtrix3::Client, command: SoundCommands) -> Result<
             println!("  Special:");
             println!("    - r2d2 (use 'sound r2d2' command)");
             println!("    - rtttl (use 'sound rtttl' command)");
-            println!("");
+            println!();
             println!("Note: Actual available sounds depend on device configuration.");
             println!("Custom sounds can be uploaded to the device via web interface.");
         }

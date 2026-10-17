@@ -10,7 +10,7 @@ fn test_notification_examples() {
     let examples = ["weather.json", "download-progress.json", "alert.json"];
 
     for example in &examples {
-        let path = format!("{}/{}", examples_dir, example);
+        let path = format!("{examples_dir}/{example}");
 
         if let Ok(content) = fs::read_to_string(&path) {
             let notification: Result<Notification, _> = serde_json::from_str(&content);
@@ -25,8 +25,7 @@ fn test_notification_examples() {
             if let Ok(notification) = notification {
                 assert!(
                     notification.text.is_some(),
-                    "Notification example should have text: {}",
-                    example
+                    "Notification example should have text: {example}"
                 );
             }
         }
@@ -40,7 +39,7 @@ fn test_custom_app_examples() {
     let examples = ["stock-ticker.json", "weather-app.json"];
 
     for example in &examples {
-        let path = format!("{}/{}", examples_dir, example);
+        let path = format!("{examples_dir}/{example}");
 
         if let Ok(content) = fs::read_to_string(&path) {
             let app: Result<CustomApp, _> = serde_json::from_str(&content);
@@ -61,7 +60,7 @@ fn test_settings_examples() {
     let examples = ["gaming-setup.json", "bedroom-mode.json"];
 
     for example in &examples {
-        let path = format!("{}/{}", examples_dir, example);
+        let path = format!("{examples_dir}/{example}");
 
         if let Ok(content) = fs::read_to_string(&path) {
             let settings: Result<Settings, _> = serde_json::from_str(&content);

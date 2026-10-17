@@ -45,19 +45,19 @@ pub async fn execute(client: awtrix3::Client, command: SystemCommands) -> Result
         SystemCommands::Update { file } => {
             // Validate file exists
             if !Path::new(&file).exists() {
-                return Err(anyhow::anyhow!("Firmware file not found: {}", file));
+                return Err(anyhow::anyhow!("Firmware file not found: {file}"));
             }
 
             // TODO: Implement firmware upload
             // This requires multipart file upload which isn't implemented in the client yet
             println!("Firmware update not yet implemented");
-            println!("Would upload: {}", file);
+            println!("Would upload: {file}");
         }
         SystemCommands::Backup { output } => {
             // Generate default filename if none provided
             let filename = output.unwrap_or_else(|| {
                 let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-                format!("awtrix3_backup_{}.json", timestamp)
+                format!("awtrix3_backup_{timestamp}.json")
             });
 
             // TODO: Implement backup by getting all settings/config
@@ -66,7 +66,7 @@ pub async fn execute(client: awtrix3::Client, command: SystemCommands) -> Result
             let backup_data = serde_json::to_string_pretty(&stats)?;
 
             fs::write(&filename, backup_data)?;
-            println!("Backup saved to: {}", filename);
+            println!("Backup saved to: {filename}");
             println!(
                 "Note: Currently only saves device statistics. Full backup implementation pending."
             );
@@ -80,61 +80,56 @@ fn display_stats(stats: &awtrix3::models::response::Stats) {
     println!("Device Statistics:");
 
     // Basic info
-    println!(
-        "  Uptime: {} seconds ({:.1} hours)",
-        stats.uptime,
-        stats.uptime as f64 / 3600.0
-    );
-    println!("  WiFi Signal: {} dBm", stats.wifi_signal);
-    println!("  Free Memory: {} bytes", stats.heap);
-    println!("  Matrix: {}", if stats.matrix { "ON" } else { "OFF" });
+    let uptime = stats.uptime;
+    let uptime_hours = stats.uptime as f64 / 3600.0;
+    println!("  Uptime: {uptime} seconds ({uptime_hours:.1} hours)");
+    let wifi_signal = stats.wifi_signal;
+    println!("  WiFi Signal: {wifi_signal} dBm");
+    let heap = stats.heap;
+    println!("  Free Memory: {heap} bytes");
+    let matrix_status = if stats.matrix { "ON" } else { "OFF" };
+    println!("  Matrix: {matrix_status}");
 
     // Current app
     if let Some(app) = &stats.current_app {
-        println!("  Current App: {}", app);
+        println!("  Current App: {app}");
     }
 
     // Sensors
     if let Some(temp) = stats.temperature {
-        println!("  Temperature: {:.1}°C", temp);
+        println!("  Temperature: {temp:.1}°C");
     }
 
     if let Some(humidity) = stats.humidity {
-        println!("  Humidity: {:.1}%", humidity);
+        println!("  Humidity: {humidity:.1}%");
     }
 
     if let Some(ldr) = stats.ldr {
-        println!("  Light Sensor (LDR): {}", ldr);
+        println!("  Light Sensor (LDR): {ldr}");
     }
 
     if let Some(lux) = stats.lux {
-        println!("  Light Level: {:.1} lux", lux);
+        println!("  Light Level: {lux:.1} lux");
     }
 
     if let Some(battery) = stats.battery {
-        println!("  Battery: {}%", battery);
+        println!("  Battery: {battery}%");
     }
 
     // Indicators
     if let Some(indicators) = &stats.indicators {
         println!("  Indicators:");
-        println!(
-            "    1: {}",
-            if indicators.indicator1 { "ON" } else { "OFF" }
-        );
-        println!(
-            "    2: {}",
-            if indicators.indicator2 { "ON" } else { "OFF" }
-        );
-        println!(
-            "    3: {}",
-            if indicators.indicator3 { "ON" } else { "OFF" }
-        );
+        let indicator1_status = if indicators.indicator1 { "ON" } else { "OFF" };
+        println!("    1: {indicator1_status}");
+        let indicator2_status = if indicators.indicator2 { "ON" } else { "OFF" };
+        println!("    2: {indicator2_status}");
+        let indicator3_status = if indicators.indicator3 { "ON" } else { "OFF" };
+        println!("    3: {indicator3_status}");
     }
 }
 
 fn confirm_destructive_action(action: &str) -> Result<bool> {
-    println!("⚠️  WARNING: This will {}", action);
+    println!("⚠️  WARNING: This will {action}");
     let confirmed = Confirm::new()
         .with_prompt("Are you sure you want to continue?")
         .default(false)

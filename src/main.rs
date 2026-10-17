@@ -42,7 +42,7 @@ async fn main() -> Result<()> {
             if !json_output {
                 eprintln!("{} {}", "Error:".red().bold(), e);
             } else {
-                eprintln!(r#"{{"error": "{}"}}"#, e);
+                eprintln!(r#"{{"error": "{e}"}}"#);
             }
             std::process::exit(1);
         }

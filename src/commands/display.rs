@@ -11,7 +11,7 @@ pub async fn execute(client: awtrix3::Client, command: DisplayCommands) -> Resul
         } => {
             // Validate kelvin range if provided
             if let Some(k) = kelvin {
-                if k < 2000 || k > 6500 {
+                if !(2000..=6500).contains(&k) {
                     return Err(anyhow::anyhow!(
                         "Color temperature must be between 2000K and 6500K"
                     ));
@@ -34,17 +34,19 @@ pub async fn execute(client: awtrix3::Client, command: DisplayCommands) -> Resul
 
             // Provide feedback
             match (parsed_color, kelvin, brightness) {
-                (Some(c), None, Some(b)) => println!(
-                    "Mood light set to color {} with brightness {}",
-                    c.to_hex(),
-                    b
-                ),
-                (None, Some(k), Some(b)) => {
-                    println!("Mood light set to {}K with brightness {}", k, b)
+                (Some(c), None, Some(b)) => {
+                    let color_hex = c.to_hex();
+                    println!("Mood light set to color {color_hex} with brightness {b}");
                 }
-                (Some(c), None, None) => println!("Mood light set to color {}", c.to_hex()),
-                (None, Some(k), None) => println!("Mood light set to {}K", k),
-                (None, None, Some(b)) => println!("Mood light brightness set to {}", b),
+                (None, Some(k), Some(b)) => {
+                    println!("Mood light set to {k}K with brightness {b}")
+                }
+                (Some(c), None, None) => {
+                    let color_hex = c.to_hex();
+                    println!("Mood light set to color {color_hex}");
+                }
+                (None, Some(k), None) => println!("Mood light set to {k}K"),
+                (None, None, Some(b)) => println!("Mood light brightness set to {b}"),
                 _ => println!("Mood light updated"),
             }
         }
@@ -55,11 +57,8 @@ pub async fn execute(client: awtrix3::Client, command: DisplayCommands) -> Resul
             }
 
             println!("Screen viewing not yet implemented");
-            println!(
-                "Would show screen at {} FPS{}",
-                fps,
-                if fullscreen { " (fullscreen)" } else { "" }
-            );
+            let fullscreen_text = if fullscreen { " (fullscreen)" } else { "" };
+            println!("Would show screen at {fps} FPS{fullscreen_text}");
 
             // TODO: Implement live screen viewing
             // This would require:
@@ -70,7 +69,7 @@ pub async fn execute(client: awtrix3::Client, command: DisplayCommands) -> Resul
         }
         DisplayCommands::Stream { interval } => {
             println!("Screen streaming not yet implemented");
-            println!("Would stream screen updates every {}ms", interval);
+            println!("Would stream screen updates every {interval}ms");
 
             // TODO: Implement screen streaming
             // Similar to screen viewing but continuous

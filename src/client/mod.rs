@@ -118,7 +118,7 @@ impl ClientBuilder {
             .gzip(true)
             .brotli(true)
             .build()
-            .map_err(|e| AwtrixError::Config(format!("Failed to build HTTP client: {}", e)))?;
+            .map_err(|e| AwtrixError::Config(format!("Failed to build HTTP client: {e}")))?;
 
         Client::with_client(host, http_client)
     }

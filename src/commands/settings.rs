@@ -26,12 +26,12 @@ pub async fn execute(client: awtrix3::Client, command: SettingsCommands) -> Resu
             // Send updated settings
             client.update_settings(&settings).await?;
 
-            println!("Setting '{}' updated to '{}'", key, value);
+            println!("Setting '{key}' updated to '{value}'");
         }
         SettingsCommands::Import { file } => {
             // Validate file exists
             if !std::path::Path::new(&file).exists() {
-                return Err(anyhow::anyhow!("Settings file not found: {}", file));
+                return Err(anyhow::anyhow!("Settings file not found: {file}"));
             }
 
             // Read and parse settings file
@@ -41,7 +41,7 @@ pub async fn execute(client: awtrix3::Client, command: SettingsCommands) -> Resu
             // Apply imported settings
             client.update_settings(&imported_settings).await?;
 
-            println!("Settings imported from: {}", file);
+            println!("Settings imported from: {file}");
         }
         SettingsCommands::Export { output } => {
             let settings = client.get_settings().await?;
@@ -49,7 +49,7 @@ pub async fn execute(client: awtrix3::Client, command: SettingsCommands) -> Resu
             // Generate filename if not provided
             let filename = output.unwrap_or_else(|| {
                 let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-                format!("awtrix3_settings_{}.json", timestamp)
+                format!("awtrix3_settings_{timestamp}.json")
             });
 
             // Export settings as pretty JSON
@@ -57,11 +57,11 @@ pub async fn execute(client: awtrix3::Client, command: SettingsCommands) -> Resu
 
             if filename == "-" {
                 // Output to stdout
-                println!("{}", json_content);
+                println!("{json_content}");
             } else {
                 // Write to file
                 fs::write(&filename, json_content)?;
-                println!("Settings exported to: {}", filename);
+                println!("Settings exported to: {filename}");
             }
         }
         SettingsCommands::List => {
@@ -74,78 +74,79 @@ pub async fn execute(client: awtrix3::Client, command: SettingsCommands) -> Resu
 
 fn display_all_settings(settings: &Settings) {
     println!("Current AWTRIX3 Settings:");
-    println!("");
+    println!();
 
     // Display settings
     if let Some(brightness) = settings.brightness {
-        println!("  brightness: {} (0-255)", brightness);
+        println!("  brightness: {brightness} (0-255)");
     }
 
     if let Some(auto_brightness) = settings.auto_brightness {
-        println!("  auto_brightness: {}", auto_brightness);
+        println!("  auto_brightness: {auto_brightness}");
     }
 
     if let Some(auto_transition) = settings.auto_transition {
-        println!("  auto_transition: {}", auto_transition);
+        println!("  auto_transition: {auto_transition}");
     }
 
     if let Some(app_time) = settings.app_time {
-        println!("  app_time: {} seconds", app_time);
+        println!("  app_time: {app_time} seconds");
     }
 
     if let Some(transition) = &settings.transition {
-        println!("  transition: {}", transition);
+        println!("  transition: {transition}");
     }
 
     if let Some(transition_time) = settings.transition_time {
-        println!("  transition_time: {} ms", transition_time);
+        println!("  transition_time: {transition_time} ms");
     }
 
     if let Some(text_color) = &settings.text_color {
-        println!("  text_color: {}", text_color.to_hex());
+        let color_hex = text_color.to_hex();
+        println!("  text_color: {color_hex}");
     }
 
     if let Some(temp_unit) = &settings.temp_unit {
-        println!("  temp_unit: {}", temp_unit);
+        println!("  temp_unit: {temp_unit}");
     }
 
     if let Some(scroll_speed) = settings.scroll_speed {
-        println!("  scroll_speed: {}%", scroll_speed);
+        println!("  scroll_speed: {scroll_speed}%");
     }
 
     // Time app settings
     if let Some(time_app) = &settings.time_app {
-        println!("");
+        println!();
         println!("  Time App Settings:");
         if let Some(format) = time_app.format {
-            println!("    time_app.format: {}", format);
+            println!("    time_app.format: {format}");
         }
         if let Some(show_weekday) = time_app.show_weekday {
-            println!("    time_app.show_weekday: {}", show_weekday);
+            println!("    time_app.show_weekday: {show_weekday}");
         }
         if let Some(cal_header_color) = &time_app.cal_header_color {
-            println!(
-                "    time_app.cal_header_color: {}",
-                cal_header_color.to_hex()
-            );
+            let color_hex = cal_header_color.to_hex();
+            println!("    time_app.cal_header_color: {color_hex}");
         }
         if let Some(cal_body_color) = &time_app.cal_body_color {
-            println!("    time_app.cal_body_color: {}", cal_body_color.to_hex());
+            let color_hex = cal_body_color.to_hex();
+            println!("    time_app.cal_body_color: {color_hex}");
         }
         if let Some(cal_text_color) = &time_app.cal_text_color {
-            println!("    time_app.cal_text_color: {}", cal_text_color.to_hex());
+            let color_hex = cal_text_color.to_hex();
+            println!("    time_app.cal_text_color: {color_hex}");
         }
     }
 
     // Date app settings
     if let Some(date_app) = &settings.date_app {
-        println!("");
+        println!();
         println!("  Date App Settings:");
         if let Some(enabled) = date_app.enabled {
-            println!("    date_app.enabled: {}", enabled);
+            println!("    date_app.enabled: {enabled}");
         }
         if let Some(format) = &date_app.format {
-            println!("    date_app.format: {}", format);
+            println!("    date_app.format: {format}");
         }
     }
 }
@@ -154,91 +155,92 @@ fn display_specific_setting(settings: &Settings, key: &str) -> Result<()> {
     match key {
         "brightness" => {
             if let Some(value) = settings.brightness {
-                println!("{}", value);
+                println!("{value}");
             } else {
-                println!("Setting '{}' not set", key);
+                println!("Setting '{key}' not set");
             }
         }
         "auto_brightness" => {
             if let Some(value) = settings.auto_brightness {
-                println!("{}", value);
+                println!("{value}");
             } else {
-                println!("Setting '{}' not set", key);
+                println!("Setting '{key}' not set");
             }
         }
         "auto_transition" => {
             if let Some(value) = settings.auto_transition {
-                println!("{}", value);
+                println!("{value}");
             } else {
-                println!("Setting '{}' not set", key);
+                println!("Setting '{key}' not set");
             }
         }
         "app_time" => {
             if let Some(value) = settings.app_time {
-                println!("{}", value);
+                println!("{value}");
             } else {
-                println!("Setting '{}' not set", key);
+                println!("Setting '{key}' not set");
             }
         }
         "transition" => {
             if let Some(value) = &settings.transition {
-                println!("{}", value);
+                println!("{value}");
             } else {
-                println!("Setting '{}' not set", key);
+                println!("Setting '{key}' not set");
             }
         }
         "transition_time" => {
             if let Some(value) = settings.transition_time {
-                println!("{}", value);
+                println!("{value}");
             } else {
-                println!("Setting '{}' not set", key);
+                println!("Setting '{key}' not set");
             }
         }
         "text_color" => {
             if let Some(value) = &settings.text_color {
-                println!("{}", value.to_hex());
+                let color_hex = value.to_hex();
+                println!("{color_hex}");
             } else {
-                println!("Setting '{}' not set", key);
+                println!("Setting '{key}' not set");
             }
         }
         "temp_unit" => {
             if let Some(value) = &settings.temp_unit {
-                println!("{}", value);
+                println!("{value}");
             } else {
-                println!("Setting '{}' not set", key);
+                println!("Setting '{key}' not set");
             }
         }
         "scroll_speed" => {
             if let Some(value) = settings.scroll_speed {
-                println!("{}", value);
+                println!("{value}");
             } else {
-                println!("Setting '{}' not set", key);
+                println!("Setting '{key}' not set");
             }
         }
         "time_app.format" => {
             if let Some(time_app) = &settings.time_app {
                 if let Some(value) = time_app.format {
-                    println!("{}", value);
+                    println!("{value}");
                 } else {
-                    println!("Setting '{}' not set", key);
+                    println!("Setting '{key}' not set");
                 }
             } else {
-                println!("Setting '{}' not set", key);
+                println!("Setting '{key}' not set");
             }
         }
         "time_app.show_weekday" => {
             if let Some(time_app) = &settings.time_app {
                 if let Some(value) = time_app.show_weekday {
-                    println!("{}", value);
+                    println!("{value}");
                 } else {
-                    println!("Setting '{}' not set", key);
+                    println!("Setting '{key}' not set");
                 }
             } else {
-                println!("Setting '{}' not set", key);
+                println!("Setting '{key}' not set");
             }
         }
         _ => {
-            return Err(anyhow::anyhow!("Unknown setting key: {}", key));
+            return Err(anyhow::anyhow!("Unknown setting key: {key}"));
         }
     }
 
@@ -332,8 +334,7 @@ fn update_setting(settings: &mut Settings, key: &str, value: &str) -> Result<()>
         }
         _ => {
             return Err(anyhow::anyhow!(
-                "Unknown setting key: {}. Use 'settings list' to see available settings",
-                key
+                "Unknown setting key: {key}. Use 'settings list' to see available settings"
             ));
         }
     }
@@ -343,20 +344,20 @@ fn update_setting(settings: &mut Settings, key: &str, value: &str) -> Result<()>
 
 fn display_settings_documentation() {
     println!("Available AWTRIX3 Settings:");
-    println!("");
+    println!();
 
     println!("📱 Display Settings:");
     println!("  brightness                  Matrix brightness (0-255)");
     println!("  auto_brightness             Automatic brightness control (true/false)");
     println!("  text_color                  Global text color (hex: #FF0000, rgb: 255,0,0, or name: red)");
-    println!("");
+    println!();
 
     println!("🔄 App Management:");
     println!("  auto_transition             Automatic app switching (true/false)");
     println!("  app_time                    App display duration in seconds");
     println!("  transition                  Transition effect name (slide, fade, etc.)");
     println!("  transition_time             Transition duration in milliseconds");
-    println!("");
+    println!();
 
     println!("🕐 Time App Settings:");
     println!("  time_app.format             Time format (0-5)");
@@ -364,17 +365,17 @@ fn display_settings_documentation() {
     println!("  time_app.cal_header_color   Calendar header color");
     println!("  time_app.cal_body_color     Calendar body color");
     println!("  time_app.cal_text_color     Calendar text color");
-    println!("");
+    println!();
 
     println!("📅 Date App Settings:");
     println!("  date_app.enabled            Enable date app (true/false)");
     println!("  date_app.format             Date format string");
-    println!("");
+    println!();
 
     println!("⚙️  Other Settings:");
     println!("  scroll_speed                Scroll speed percentage (0-200)");
     println!("  temp_unit                   Temperature unit (C/F)");
-    println!("");
+    println!();
 
     println!("Example usage:");
     println!("  awtrix settings set brightness 150");

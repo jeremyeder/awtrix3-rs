@@ -5,20 +5,22 @@ pub async fn execute(client: awtrix3::Client, command: InfoCommands) -> Result<(
     match command {
         InfoCommands::Version => {
             let version = client.get_version().await?;
-            println!("AWTRIX3 Firmware Version: {}", version);
+            println!("AWTRIX3 Firmware Version: {version}");
         }
         InfoCommands::Effects => {
             let effects = client.get_effects().await?;
             println!("Available Effects:");
             for (i, effect) in effects.iter().enumerate() {
-                println!("  {}. {}", i + 1, effect);
+                let index = i + 1;
+                println!("  {index}. {effect}");
             }
         }
         InfoCommands::Transitions => {
             let transitions = client.get_transitions().await?;
             println!("Available Transitions:");
             for (i, transition) in transitions.iter().enumerate() {
-                println!("  {}. {}", i + 1, transition);
+                let index = i + 1;
+                println!("  {index}. {transition}");
             }
         }
         InfoCommands::Screen { format } => match format {

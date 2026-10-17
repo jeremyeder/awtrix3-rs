@@ -91,6 +91,12 @@ pub struct NotificationBuilder {
     notification: Notification,
 }
 
+impl Default for NotificationBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NotificationBuilder {
     pub fn new() -> Self {
         Self {

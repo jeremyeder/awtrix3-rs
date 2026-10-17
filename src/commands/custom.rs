@@ -29,11 +29,11 @@ pub async fn execute(client: awtrix3::Client, command: CustomCommands) -> Result
 
             // Create the app
             client.create_custom_app(&name, &app).await?;
-            println!("Custom app '{}' created", name);
+            println!("Custom app '{name}' created");
         }
         CustomCommands::Delete { name } => {
             client.delete_custom_app(&name).await?;
-            println!("Custom app '{}' deleted", name);
+            println!("Custom app '{name}' deleted");
         }
         CustomCommands::List => {
             println!("Custom app listing not yet implemented");
@@ -49,13 +49,10 @@ pub async fn execute(client: awtrix3::Client, command: CustomCommands) -> Result
         } => {
             // Validate file exists
             if !std::path::Path::new(&file).exists() {
-                return Err(anyhow::anyhow!("Configuration file not found: {}", file));
+                return Err(anyhow::anyhow!("Configuration file not found: {file}"));
             }
 
-            println!(
-                "Watching file '{}' for app '{}' (interval: {}s)",
-                file, name, interval
-            );
+            println!("Watching file '{file}' for app '{name}' (interval: {interval}s)");
             println!("Press Ctrl+C to stop watching...");
 
             // TODO: Implement file watching
@@ -70,12 +67,12 @@ pub async fn execute(client: awtrix3::Client, command: CustomCommands) -> Result
                 match fs::read_to_string(&file) {
                     Ok(content) => match serde_json::from_str::<CustomApp>(&content) {
                         Ok(app) => match client.create_custom_app(&name, &app).await {
-                            Ok(_) => println!("Updated app '{}' from file", name),
-                            Err(e) => eprintln!("Failed to update app: {}", e),
+                            Ok(_) => println!("Updated app '{name}' from file"),
+                            Err(e) => eprintln!("Failed to update app: {e}"),
                         },
-                        Err(e) => eprintln!("Failed to parse JSON: {}", e),
+                        Err(e) => eprintln!("Failed to parse JSON: {e}"),
                     },
-                    Err(e) => eprintln!("Failed to read file: {}", e),
+                    Err(e) => eprintln!("Failed to read file: {e}"),
                 }
 
                 // Wait for the specified interval

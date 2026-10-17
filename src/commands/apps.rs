@@ -7,7 +7,7 @@ pub async fn execute(client: awtrix3::Client, command: AppCommands) -> Result<()
             let loop_info = client.get_apps().await?;
             println!("App Loop Status:");
             if let Some(current) = &loop_info.current {
-                println!("  Current App: {}", current);
+                println!("  Current App: {current}");
             } else {
                 println!("  Current App: None");
             }
@@ -20,7 +20,7 @@ pub async fn execute(client: awtrix3::Client, command: AppCommands) -> Result<()
                     } else {
                         "disabled"
                     };
-                    println!("  - {} ({})", app.name, status);
+                    println!("  - {name} ({status})", name = app.name, status = status);
                 }
             } else {
                 println!("\nNo apps in loop");
@@ -36,7 +36,7 @@ pub async fn execute(client: awtrix3::Client, command: AppCommands) -> Result<()
         }
         AppCommands::Switch { name } => {
             client.switch_app(&name).await?;
-            println!("Switched to app: {}", name);
+            println!("Switched to app: {name}");
         }
         AppCommands::Reorder { apps } => {
             // Split the comma-separated list
@@ -44,7 +44,7 @@ pub async fn execute(client: awtrix3::Client, command: AppCommands) -> Result<()
 
             // TODO: Implement reorder API call
             // For now, just show what would be reordered
-            println!("Reordering apps to: {:?}", app_list);
+            println!("Reordering apps to: {app_list:?}");
             println!("(Reorder functionality not yet implemented in API client)");
         }
         AppCommands::Update { file: _file } => {
